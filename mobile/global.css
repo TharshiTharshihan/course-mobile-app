@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+input:focus,
+textarea:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+body,
+input,
+textarea,
+button {
+  font-family: "Manrope", sans-serif;
+}

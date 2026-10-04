@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "Student QR",
+    "slug": "student-qr",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "studentqr",
+    "plugins": [
+      [
+        "expo-camera",
+        { "cameraPermission": "Allow Student QR to use the camera to scan student QR codes." }
+      ],
+      "expo-secure-store"
+    ],
+    "ios": { "supportsTablet": false, "bundleIdentifier": "com.studentqr.app" },
+    "android": { "package": "com.studentqr.app" }
+  }
+}
