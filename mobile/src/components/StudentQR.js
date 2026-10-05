@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { View, Text, Alert } from "react-native";
+import { View, Text, Alert, Platform } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { captureRef } from "react-native-view-shot";
 import * as Sharing from "expo-sharing";
@@ -24,7 +24,23 @@ export default function StudentQR({ student, showActions = true }) {
   const download = async () => {
     try {
       setBusy(true);
-      const uri = await captureRef(ref, { format: "png", quality: 1, result: "tmpfile" });
+      if (!ref.current) {
+        throw new Error("The QR code is not ready to export. Please try again.");
+      }
+      const uri = await captureRef(ref.current, {
+        format: "png",
+        quality: 1,
+        result: Platform.OS === "web" ? "data-uri" : "tmpfile",
+      });
+      if (Platform.OS === "web") {
+        const link = document.createElement("a");
+        link.href = uri;
+        link.download = `QR-${student.studentId}.png`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        return;
+      }
       if (!(await Sharing.isAvailableAsync())) {
         Alert.alert("Not supported", "Sharing is not available on this device.");
         return;

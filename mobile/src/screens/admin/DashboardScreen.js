@@ -51,9 +51,9 @@ export default function DashboardScreen({ navigation }) {
   );
 
   return (
-    <View className="flex-1 bg-surface">
+    <View className="flex-1 bg-surface ">
       <Hero
-        title="Admin panel"
+        title="Admin Panel"
         subtitle="Overview of students and course content"
         right={
           <Pressable
