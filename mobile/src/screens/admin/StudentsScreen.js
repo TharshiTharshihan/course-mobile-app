@@ -40,7 +40,7 @@ export default function StudentsScreen({ navigation }) {
 
   return (
     <View className="flex-1 bg-surface">
-      <Hero title="Students" subtitle={`${list.length} registered`} />
+      <Hero title="Students" subtitle={`${list.length} registered`} titleStyle={{ fontFamily: "Poppins_700Bold" }} />
       <Sheet>
         <FlatList
           data={list}

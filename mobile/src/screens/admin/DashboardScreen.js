@@ -55,6 +55,7 @@ export default function DashboardScreen({ navigation }) {
       <Hero
         title="Admin Panel"
         subtitle="Overview of students and course content"
+        titleStyle={{ fontFamily: "Poppins_700Bold" }}
         right={
           <Pressable
             onPress={() => setShowLogoutModal(true)}

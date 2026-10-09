@@ -12,5 +12,5 @@ body,
 input,
 textarea,
 button {
-  font-family: "Manrope", sans-serif;
+  font-family: "Manrope", "Inter", "Roboto", sans-serif;
 }

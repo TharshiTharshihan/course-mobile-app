@@ -44,10 +44,10 @@ router.get("/:id", async (req, res) => {
 });
 
 router.put("/:id", async (req, res) => {
-  const { fullName, phone, department, batch } = req.body;
+  const { department, batch } = req.body;
   const student = await Student.findByIdAndUpdate(
     req.params.id,
-    { fullName, phone, department, batch },
+    { department, batch },
     { new: true, runValidators: true }
   ).select("-password -__v");
   if (!student) return res.status(404).json({ message: "Student not found" });

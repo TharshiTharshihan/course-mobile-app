@@ -7,8 +7,6 @@ import StudentQR from "../../components/StudentQR";
 import { errMsg, formatDate } from "../../utils";
 
 const FIELDS = [
-  { key: "fullName", label: "Full name" },
-  { key: "phone", label: "Phone", keyboardType: "phone-pad" },
   { key: "department", label: "Department" },
   { key: "batch", label: "Batch / Year" },
 ];
@@ -61,6 +59,7 @@ export default function StudentDetailScreen({ route, navigation }) {
     <View className="flex-1 bg-surface">
       <Hero
         title={student?.fullName || "Student"}
+        titleStyle={{ fontFamily: "Poppins_700Bold" }}
         subtitle={student?.studentId}
         onBack={() => navigation.goBack()}
       />

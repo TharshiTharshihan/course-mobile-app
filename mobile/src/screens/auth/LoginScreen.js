@@ -32,7 +32,7 @@ export default function LoginScreen({ navigation }) {
           <View className="h-16 w-16 items-center justify-center rounded-3xl bg-brand">
             <Ionicons name="school" size={34} color="#0B0B0F" />
           </View>
-          <Text className="mt-8 text-4xl font-extrabold text-white">Welcome{"\n"}back</Text>
+          <Text className="mt-8 text-4xl font-extrabold font-roboto text-white">Welcome back</Text>
           <Text className="mt-2 text-base text-white/60">Sign in to see your courses and student QR.</Text>
         </View>
 

@@ -47,6 +47,8 @@ export function AuthProvider({ children }) {
     await finish(data);
   };
 
+  const updateUser = (updated) => setUser(updated);
+
   const logout = async () => {
     setToken(null);
     try {
@@ -56,7 +58,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, booting, login, register, logout, isAdmin: user?.role === "admin" }}>
+    <AuthContext.Provider value={{ user, booting, login, register, updateUser, logout, isAdmin: user?.role === "admin" }}>
       {children}
     </AuthContext.Provider>
   );

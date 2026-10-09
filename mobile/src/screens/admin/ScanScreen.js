@@ -64,9 +64,14 @@ export default function ScanScreen({ navigation }) {
         <View className="mb-6 h-20 w-20 items-center justify-center rounded-full bg-brand">
           <Ionicons name="camera" size={36} color="#0B0B0F" />
         </View>
-        <Text className="text-center text-2xl font-extrabold text-white">Camera access needed</Text>
+        <Text className="text-center text-2xl font-extrabold text-white font-poppins">Camera access needed</Text>
         <Text className="mb-8 mt-2 text-center text-white/60">Allow the camera to scan student QR codes.</Text>
-        <Button title="Allow camera" onPress={requestPermission} className="w-full" />
+        <Button
+          title="Allow camera"
+          onPress={requestPermission}
+          className="w-full"
+          titleStyle={{ fontFamily: "Poppins_700Bold" }}
+        />
       </View>
     );
   }

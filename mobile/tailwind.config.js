@@ -11,6 +11,10 @@ module.exports = {
       },
       fontFamily: {
         sans: ["Manrope_400Regular"],
+        inter: ["Inter_400Regular"],
+        roboto: ["Roboto_400Regular"],
+        poppins: ["Poppins_400Regular"],
+        system: ["sans-serif"],
       },
     },
   },

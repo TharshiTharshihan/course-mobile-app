@@ -1,14 +1,30 @@
 import React from "react";
-import { View, ScrollView } from "react-native";
+import { View, ScrollView, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, Card, ConfirmModal, Hero, InfoRow, Sheet } from "../../components/ui";
+import { Button, Card, ConfirmModal, FormModal, Hero, InfoRow, Sheet } from "../../components/ui";
 import StudentQR from "../../components/StudentQR";
 import { useAuth } from "../../context/AuthContext";
+import api from "../../api";
+import { errMsg } from "../../utils";
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
-  const { user, logout } = useAuth();
+  const { user, updateUser, logout } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = React.useState(false);
+  const [editing, setEditing] = React.useState(false);
+
+  const save = async (values) => {
+    try {
+      const { data } = await api.put("/auth/me", {
+        fullName: values.fullName,
+        phone: values.phone,
+      });
+      updateUser(data);
+      setEditing(false);
+    } catch (e) {
+      Alert.alert("Could not save", errMsg(e));
+    }
+  };
 
   return (
     <View className="flex-1 bg-surface">
@@ -24,8 +40,9 @@ export default function ProfileScreen() {
             <InfoRow icon="business-outline" label="Department" value={user.department} />
             <InfoRow icon="calendar-outline" label="Batch" value={user.batch} />
           </Card>
+          <Button className="mt-5" variant="outline" icon="create-outline" title="Edit profile" onPress={() => setEditing(true)} />
           <Button
-            className="mt-5"
+            className="mt-3"
             variant="outline"
             icon="log-out-outline"
             title="Sign out"
@@ -43,6 +60,17 @@ export default function ProfileScreen() {
           setShowLogoutModal(false);
           await logout();
         }}
+      />
+      <FormModal
+        visible={editing}
+        title="Edit profile"
+        fields={[
+          { key: "fullName", label: "Full name" },
+          { key: "phone", label: "Phone", keyboardType: "phone-pad" },
+        ]}
+        initial={user || {}}
+        onClose={() => setEditing(false)}
+        onSubmit={save}
       />
     </View>
   );

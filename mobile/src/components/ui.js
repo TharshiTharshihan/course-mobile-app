@@ -14,7 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { colorFor, initials } from "../utils";
 
 /** Dark rounded header, Uber / PickMe style */
-export function Hero({ title, subtitle, onBack, right, children }) {
+export function Hero({ title, subtitle, onBack, right, children, titleStyle }) {
   const insets = useSafeAreaInsets();
   return (
     <View className="bg-ink px-5 pb-10" style={{ paddingTop: insets.top + 12 }}>
@@ -31,7 +31,7 @@ export function Hero({ title, subtitle, onBack, right, children }) {
         )}
         {right}
       </View>
-      <Text className="mt-3 text-3xl font-extrabold text-white" numberOfLines={2}>
+      <Text className="mt-3 text-3xl font-extrabold text-white" style={titleStyle} numberOfLines={2}>
         {title}
       </Text>
       {subtitle ? (
@@ -49,7 +49,17 @@ export function Sheet({ children, className = "" }) {
   return <View className={`-mt-6 flex-1 rounded-t-[28px] bg-surface ${className}`}>{children}</View>;
 }
 
-export function Button({ title, onPress, variant = "primary", icon, loading, disabled, className = "" }) {
+export function Button({
+  title,
+  onPress,
+  variant = "primary",
+  icon,
+  loading,
+  disabled,
+  className = "",
+  titleClassName = "",
+  titleStyle,
+}) {
   const bg = {
     primary: "bg-brand",
     dark: "bg-ink",
@@ -79,7 +89,9 @@ export function Button({ title, onPress, variant = "primary", icon, loading, dis
       ) : (
         <>
           {icon ? <Ionicons name={icon} size={20} color={iconColor[variant]} style={{ marginRight: 8 }} /> : null}
-          <Text className={`text-base font-bold ${fg[variant]}`}>{title}</Text>
+          <Text className={`text-base font-bold ${fg[variant]} ${titleClassName}`} style={titleStyle}>
+            {title}
+          </Text>
         </>
       )}
     </Pressable>

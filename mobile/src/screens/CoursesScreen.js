@@ -4,7 +4,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
-import { Card, Empty, FormModal, Hero, Input, Loader, Sheet } from "../components/ui";
+import { Card, Empty, FormModal, Hero, Input, Loader, Sheet ,ConfirmModal} from "../components/ui";
 import { colorFor, errMsg } from "../utils";
 
 const FIELDS = [
@@ -20,6 +20,8 @@ export default function CoursesScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [q, setQ] = useState("");
   const [modal, setModal] = useState(null); // null | {} (new) | course (edit)
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const { logout } = useAuth();
 
   const load = useCallback(async () => {
     try {
@@ -75,6 +77,15 @@ export default function CoursesScreen({ navigation }) {
     <View className="flex-1 bg-surface">
       <Hero
         title={isAdmin ? "Manage courses" : "My courses"}
+        titleStyle={{ fontFamily: "Poppins_700Bold" }}
+         right={
+          <Pressable
+            onPress={() => setShowLogoutModal(true)}
+            className="h-10 w-10 items-center justify-center rounded-full bg-white/10"
+          >
+            <Ionicons name="log-out-outline" size={20} color="#fff" />
+          </Pressable>
+        }
         subtitle={isAdmin ? "Add, edit and upload notes" : `Hi ${user?.fullName?.split(" ")[0] || ""}, pick a course to open notes`}
       />
       <Sheet>
@@ -132,6 +143,18 @@ export default function CoursesScreen({ navigation }) {
           )}
         />
       </Sheet>
+
+      <ConfirmModal
+        visible={showLogoutModal}
+        title="Sign out?"
+        message="Are you sure you want to sign out of the admin panel?"
+        confirmLabel="Sign out"
+        onCancel={() => setShowLogoutModal(false)}
+        onConfirm={async () => {
+          setShowLogoutModal(false);
+          await logout();
+        }}
+      />
 
       {isAdmin ? (
         <Pressable
