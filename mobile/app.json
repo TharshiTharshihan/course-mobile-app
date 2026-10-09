@@ -9,11 +9,28 @@
     "plugins": [
       [
         "expo-camera",
-        { "cameraPermission": "Allow Student QR to use the camera to scan student QR codes." }
+        {
+          "cameraPermission": "Allow Student QR to use the camera to scan student QR codes."
+        }
       ],
       "expo-secure-store"
     ],
-    "ios": { "supportsTablet": false, "bundleIdentifier": "com.studentqr.app" },
-    "android": { "package": "com.studentqr.app" }
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.studentqr.app"
+    },
+    "android": {
+      "package": "com.studentqr.app",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "extra": {
+      "eas": {
+        "projectId": "30f5e447-e5bd-4b55-baa0-8542c9596f72"
+      }
+    },
+    "owner": "tharshihan"
   }
 }

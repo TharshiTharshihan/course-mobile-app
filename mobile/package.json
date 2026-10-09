@@ -28,7 +28,6 @@
     "expo-sharing": "*",
     "expo-status-bar": "*",
     "lightningcss": "^1.33.0",
-    "lightningcss-win32-x64-msvc": "^1.33.0",
     "nativewind": "^4.2.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
