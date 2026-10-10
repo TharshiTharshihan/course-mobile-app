@@ -4,5 +4,5 @@
 //  - Android emulator:     http://10.0.2.2:5000
 //  - iOS simulator:        http://localhost:5000
 //export const API_URL = "http://192.168.1.154:5000";
-export const API_URL = "https://course-mobile-app.onrender.com/";
+export const API_URL = "https://course-mobile-app.onrender.com";
 
