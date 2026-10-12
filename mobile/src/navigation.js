@@ -30,15 +30,26 @@ const tabOptions = ({ route }) => ({
   headerShown: false,
   tabBarActiveTintColor: "#0B0B0F",
   tabBarInactiveTintColor: "#9CA3AF",
-  tabBarLabelStyle: { fontWeight: "700", fontSize: 11 },
-  tabBarStyle: { backgroundColor: "#fff", borderTopWidth: 0, elevation: 14 },
+  tabBarLabelStyle: { fontWeight: "700", fontSize: 11, marginBottom: 2 },
+  tabBarItemStyle: { flex: 1 },
+  tabBarIconStyle: { height: 36, width: 56 },
+  tabBarStyle: {
+    backgroundColor: "#fff",
+    borderTopWidth: 0,
+    elevation: 14,
+    height: 68,
+    paddingTop: 5,
+    paddingBottom: 5,
+  },
   tabBarIcon: ({ focused, color }) => (
     <View
       style={{
+        width: 52,
+        height: 32,
+        alignItems: "center",
+        justifyContent: "center",
         backgroundColor: focused ? "#FFC400" : "transparent",
         borderRadius: 14,
-        paddingHorizontal: 14,
-        paddingVertical: 3,
       }}
     >
       <Ionicons name={ICONS[route.name][focused ? 0 : 1]} size={22} color={color} />
