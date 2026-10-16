@@ -1,10 +1,12 @@
-import React from "react";
-import { View, ActivityIndicator } from "react-native";
+import React, { useState } from "react";
+import { View } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "./context/AuthContext";
 
+import SplashScreen from "./screens/SplashScreen";
 import LoginScreen from "./screens/auth/LoginScreen";
 import RegisterScreen from "./screens/auth/RegisterScreen";
 import CoursesScreen from "./screens/CoursesScreen";
@@ -26,20 +28,22 @@ const ICONS = {
   Scan: ["scan", "scan-outline"],
 };
 
-const tabOptions = ({ route }) => ({
+// Bottom inset = height of Android's gesture/3-button bar (the app draws edge-to-edge),
+// so the tab bar grows by it instead of letting the labels slide under it.
+const tabOptions = (bottomInset) => ({ route }) => ({
   headerShown: false,
   tabBarActiveTintColor: "#0B0B0F",
   tabBarInactiveTintColor: "#9CA3AF",
   tabBarLabelStyle: { fontWeight: "700", fontSize: 11, marginBottom: 2 },
   tabBarItemStyle: { flex: 1 },
-  tabBarIconStyle: { height: 36, width: 56 },
+  tabBarIconStyle: { height: 32, width: 56 },
   tabBarStyle: {
     backgroundColor: "#fff",
     borderTopWidth: 0,
     elevation: 14,
-    height: 68,
-    paddingTop: 5,
-    paddingBottom: 5,
+    height: 64 + bottomInset,
+    paddingTop: 6,
+    paddingBottom: bottomInset + 6,
   },
   tabBarIcon: ({ focused, color }) => (
     <View
@@ -58,8 +62,9 @@ const tabOptions = ({ route }) => ({
 });
 
 function StudentTabs() {
+  const { bottom } = useSafeAreaInsets();
   return (
-    <Tab.Navigator screenOptions={tabOptions}>
+    <Tab.Navigator screenOptions={tabOptions(bottom)}>
       <Tab.Screen name="Courses" component={CoursesScreen} />
       <Tab.Screen name="MyQR" component={ProfileScreen} options={{ title: "My QR" }} />
     </Tab.Navigator>
@@ -67,8 +72,9 @@ function StudentTabs() {
 }
 
 function AdminTabs() {
+  const { bottom } = useSafeAreaInsets();
   return (
-    <Tab.Navigator screenOptions={tabOptions}>
+    <Tab.Navigator screenOptions={tabOptions(bottom)}>
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
       <Tab.Screen name="Students" component={StudentsScreen} />
       <Tab.Screen name="Courses" component={CoursesScreen} />
@@ -79,15 +85,17 @@ function AdminTabs() {
 
 export default function RootNavigator() {
   const { user, booting, isAdmin } = useAuth();
+  const [splashDone, setSplashDone] = useState(false);
 
-  if (booting) {
-    return (
-      <View className="flex-1 items-center justify-center bg-ink">
-        <ActivityIndicator size="large" color="#FFC400" />
-      </View>
-    );
-  }
+  return (
+    <View className="flex-1 bg-ink">
+      {booting ? null : <AppStack user={user} isAdmin={isAdmin} />}
+      {splashDone ? null : <SplashScreen ready={!booting} onFinish={() => setSplashDone(true)} />}
+    </View>
+  );
+}
 
+function AppStack({ user, isAdmin }) {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false, animation: "slide_from_right" }}>
       {!user ? (

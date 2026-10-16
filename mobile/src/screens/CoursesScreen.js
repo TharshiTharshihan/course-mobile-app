@@ -4,7 +4,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
-import { Card, Empty, FormModal, Hero, Input, Loader, Sheet ,ConfirmModal} from "../components/ui";
+import { Card, ConfirmModal, Empty, FormModal, GreetingHero, Hero, Input, Loader, Sheet } from "../components/ui";
 import { colorFor, errMsg } from "../utils";
 
 const FIELDS = [
@@ -14,14 +14,13 @@ const FIELDS = [
 ];
 
 export default function CoursesScreen({ navigation }) {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, logout } = useAuth();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [q, setQ] = useState("");
   const [modal, setModal] = useState(null); // null | {} (new) | course (edit)
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const { logout } = useAuth();
 
   const load = useCallback(async () => {
     try {
@@ -73,21 +72,22 @@ export default function CoursesScreen({ navigation }) {
     (c) => c.name.toLowerCase().includes(q.toLowerCase()) || c.code.toLowerCase().includes(q.toLowerCase())
   );
 
+  const logoutButton = (
+    <Pressable
+      onPress={() => setShowLogoutModal(true)}
+      className="h-10 w-10 items-center justify-center rounded-full bg-white/10 active:opacity-70"
+    >
+      <Ionicons name="log-out-outline" size={20} color="#fff" />
+    </Pressable>
+  );
+
   return (
     <View className="flex-1 bg-surface">
-      <Hero
-        title={isAdmin ? "Manage courses" : "My courses"}
-        titleStyle={{ fontFamily: "Poppins_700Bold" }}
-         right={
-          <Pressable
-            onPress={() => setShowLogoutModal(true)}
-            className="h-10 w-10 items-center justify-center rounded-full bg-white/10"
-          >
-            <Ionicons name="log-out-outline" size={20} color="#fff" />
-          </Pressable>
-        }
-        subtitle={isAdmin ? "Add, edit and upload notes" : `Hi ${user?.fullName?.split(" ")[0] || ""}, pick a course to open notes`}
-      />
+      {isAdmin ? (
+        <Hero title="Manage courses" titleStyle={{ fontFamily: "Poppins_700Bold" }} subtitle="Add, edit and upload notes" right={logoutButton} />
+      ) : (
+        <GreetingHero name={user?.fullName} subtitle="Pick a course to open your notes" right={logoutButton} />
+      )}
       <Sheet>
         <FlatList
           data={shown}
@@ -147,7 +147,7 @@ export default function CoursesScreen({ navigation }) {
       <ConfirmModal
         visible={showLogoutModal}
         title="Sign out?"
-        message="Are you sure you want to sign out of the admin panel?"
+        message={isAdmin ? "Are you sure you want to sign out of the admin panel?" : "Are you sure you want to sign out?"}
         confirmLabel="Sign out"
         onCancel={() => setShowLogoutModal(false)}
         onConfirm={async () => {

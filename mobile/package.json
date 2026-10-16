@@ -6,6 +6,7 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
+    "emulator": "powershell -ExecutionPolicy Bypass -File scripts/start-emulator.ps1",
     "fix-deps": "expo install --fix"
   },
   "dependencies": {
@@ -26,6 +27,7 @@
     "expo-font": "^57.0.4",
     "expo-secure-store": "*",
     "expo-sharing": "*",
+    "expo-splash-screen": "~57.0.10",
     "expo-status-bar": "*",
     "lightningcss": "^1.33.0",
     "nativewind": "^4.2.0",

@@ -7,7 +7,7 @@ export const setToken = (t) => {
 };
 export const getAuthToken = () => authToken;
 
-const api = axios.create({ baseURL: `${API_URL}/api`, timeout: 20000 });
+const api = axios.create({ baseURL: `${API_URL}/api`, timeout: 60000 });
 
 api.interceptors.request.use((config) => {
   if (authToken) config.headers.Authorization = `Bearer ${authToken}`;

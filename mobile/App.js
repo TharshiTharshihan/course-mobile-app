@@ -1,5 +1,6 @@
 import "./global.css";
-import React from "react";
+import React, { useEffect } from "react";
+import * as NativeSplash from "expo-splash-screen";
 import { useFonts, Manrope_400Regular, Manrope_600SemiBold, Manrope_700Bold, Manrope_800ExtraBold } from "@expo-google-fonts/manrope";
 import { Inter_400Regular, Inter_600SemiBold, Inter_700Bold } from "@expo-google-fonts/inter";
 import { Roboto_400Regular, Roboto_700Bold } from "@expo-google-fonts/roboto";
@@ -10,6 +11,9 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer } from "@react-navigation/native";
 import { AuthProvider } from "./src/context/AuthContext";
 import RootNavigator from "./src/navigation";
+
+// Keep the native (dark) splash up until fonts are ready, then the animated SplashScreen takes over.
+NativeSplash.preventAutoHideAsync().catch(() => {});
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -26,6 +30,10 @@ export default function App() {
     Poppins_600SemiBold,
     Poppins_700Bold,
   });
+
+  useEffect(() => {
+    if (fontsLoaded) NativeSplash.hideAsync().catch(() => {});
+  }, [fontsLoaded]);
 
   if (!fontsLoaded) return null;
 

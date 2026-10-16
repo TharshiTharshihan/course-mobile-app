@@ -11,10 +11,10 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { colorFor, initials } from "../utils";
+import { colorFor, firstName, greeting, initials, todayLabel } from "../utils";
 
 /** Dark rounded header, Uber / PickMe style */
-export function Hero({ title, subtitle, onBack, right, children, titleStyle }) {
+export function Hero({ title, subtitle, onBack, left, right, eyebrow, children, titleStyle }) {
   const insets = useSafeAreaInsets();
   return (
     <View className="bg-ink px-5 pb-10" style={{ paddingTop: insets.top + 12 }}>
@@ -27,11 +27,12 @@ export function Hero({ title, subtitle, onBack, right, children, titleStyle }) {
             <Ionicons name="chevron-back" size={22} color="#fff" />
           </Pressable>
         ) : (
-          <View />
+          left || <View />
         )}
         {right}
       </View>
-      <Text className="mt-3 text-3xl font-extrabold text-white" style={titleStyle} numberOfLines={2}>
+      {eyebrow ? <Text className="mt-4 text-lg font-semibold text-brand">{eyebrow}</Text> : null}
+      <Text className={`${eyebrow ? "" : "mt-3"} text-3xl font-extrabold text-white`} style={titleStyle} numberOfLines={2}>
         {title}
       </Text>
       {subtitle ? (
@@ -119,23 +120,35 @@ export function ConfirmModal({ visible, title, message, confirmLabel = "Confirm"
   );
 }
 
-export function Input({ label, icon, secure, ...props }) {
+export function Input({ ref, label, icon, secure, error, onFocus, onBlur, ...props }) {
   const [show, setShow] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const border = error ? "border-red-400" : focused ? "border-brand-dark" : "border-gray-200";
+  const iconColor = error ? "#F87171" : focused ? "#0B0B0F" : "#8A8F98";
   return (
     <View className="mb-4">
       {label ? <Text className="mb-1.5 text-sm font-semibold text-gray-700">{label}</Text> : null}
       <View
-        className={`flex-row rounded-2xl border border-gray-200 bg-white px-4 ${
+        className={`flex-row rounded-2xl border-2 bg-white px-4 ${border} ${
           props.multiline ? "min-h-[96px] items-start py-3" : "h-14 items-center"
         }`}
       >
-        {icon ? <Ionicons name={icon} size={20} color="#8A8F98" style={{ marginRight: 10 }} /> : null}
+        {icon ? <Ionicons name={icon} size={20} color={iconColor} style={{ marginRight: 10 }} /> : null}
         <TextInput
+          ref={ref}
           className="flex-1 text-base text-ink outline-none"
           placeholderTextColor="#A0A5AD"
           secureTextEntry={secure && !show}
           style={{ outlineStyle: "none" }}
           textAlignVertical={props.multiline ? "top" : "center"}
+          onFocus={(e) => {
+            setFocused(true);
+            onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            setFocused(false);
+            onBlur?.(e);
+          }}
           {...props}
         />
         {secure ? (
@@ -144,7 +157,42 @@ export function Input({ label, icon, secure, ...props }) {
           </Pressable>
         ) : null}
       </View>
+      {error ? <Text className="ml-1 mt-1 text-xs font-semibold text-red-500">{error}</Text> : null}
     </View>
+  );
+}
+
+/** App mark: QR icon on a brand-yellow tile */
+export function Logo({ size = 64 }) {
+  return (
+    <View
+      style={{ width: size, height: size, borderRadius: size * 0.3 }}
+      className="items-center justify-center bg-brand"
+    >
+      <Ionicons name="qr-code" size={size * 0.52} color="#0B0B0F" />
+    </View>
+  );
+}
+
+/** Hero variant for home screens: "Good morning, Name" with today's date */
+export function GreetingHero({ name, subtitle, right, children }) {
+  const g = greeting();
+  return (
+    <Hero
+      title={`${firstName(name) || "there"} 👋`}
+      titleStyle={{ fontFamily: "Poppins_700Bold" }}
+      subtitle={subtitle}
+      right={right}
+      left={
+        <View className="flex-row items-center rounded-full bg-white/10 px-3 py-1.5">
+          <Ionicons name={g.icon} size={15} color="#FFC400" />
+          <Text className="ml-1.5 text-xs font-bold text-white/80">{todayLabel()}</Text>
+        </View>
+      }
+      eyebrow={g.text + ","}
+    >
+      {children}
+    </Hero>
   );
 }
 

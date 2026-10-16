@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Student QR",
+    "name": "Student QR System",
     "slug": "student-qr",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -13,7 +13,13 @@
           "cameraPermission": "Allow Student QR to use the camera to scan student QR codes."
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0B0B0F"
+        }
+      ]
     ],
     "ios": {
       "supportsTablet": false,
@@ -24,13 +30,15 @@
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
-      ]
+      ],
+      "backgroundColor": "#0B0B0F"
     },
     "extra": {
       "eas": {
         "projectId": "30f5e447-e5bd-4b55-baa0-8542c9596f72"
       }
     },
-    "owner": "tharshihan"
+    "owner": "tharshihan",
+    "backgroundColor": "#0B0B0F"
   }
 }

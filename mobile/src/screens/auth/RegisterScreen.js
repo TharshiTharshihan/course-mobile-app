@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, ScrollView, KeyboardAvoidingView, Platform, Alert } from "react-native";
+import { View, Text, ScrollView, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Hero, Input, Sheet } from "../../components/ui";
 import { useAuth } from "../../context/AuthContext";
@@ -51,6 +51,14 @@ export default function RegisterScreen({ navigation }) {
           <View className="mt-2">
             <Button title="Sign up" onPress={submit} loading={busy} />
           </View>
+
+          <View className="my-8 flex-row items-center">
+            <View className="h-px flex-1 bg-gray-200" />
+            <Text className="mx-3 text-xs font-semibold uppercase tracking-widest text-gray-400">Already have an account?</Text>
+            <View className="h-px flex-1 bg-gray-200" />
+          </View>
+
+          <Button title="Sign in" variant="outline" icon="log-in-outline" onPress={() => navigation.navigate("Login")} />
         </ScrollView>
       </Sheet>
     </KeyboardAvoidingView>

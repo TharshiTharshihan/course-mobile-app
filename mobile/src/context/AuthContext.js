@@ -4,6 +4,21 @@ import api, { setToken } from "../api";
 
 const AuthContext = createContext(null);
 const KEY = "student_qr_token";
+const USER_KEY = "student_qr_user";
+
+const clearSession = async () => {
+  setToken(null);
+  try {
+    await SecureStore.deleteItemAsync(KEY);
+    await SecureStore.deleteItemAsync(USER_KEY);
+  } catch {}
+};
+
+const saveUser = async (u) => {
+  try {
+    await SecureStore.setItemAsync(USER_KEY, JSON.stringify(u));
+  } catch {}
+};
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -11,18 +26,31 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     (async () => {
+      let saved = null;
       try {
-        const saved = await SecureStore.getItemAsync(KEY);
-        if (saved) {
+        saved = await SecureStore.getItemAsync(KEY);
+        const cached = await SecureStore.getItemAsync(USER_KEY);
+        if (saved && cached) {
+          // Open instantly with the cached profile; refresh it below without blocking launch.
           setToken(saved);
-          const { data } = await api.get("/auth/me");
-          setUser(data);
+          setUser(JSON.parse(cached));
+          setBooting(false);
         }
-      } catch {
-        setToken(null);
-        try {
-          await SecureStore.deleteItemAsync(KEY);
-        } catch {}
+      } catch {}
+
+      if (!saved) return setBooting(false);
+      setToken(saved);
+      try {
+        const { data } = await api.get("/auth/me");
+        setUser(data);
+        saveUser(data);
+      } catch (e) {
+        // Only a rejected token ends the session; network errors / a sleeping server keep it.
+        const status = e?.response?.status;
+        if (status === 401 || status === 403 || status === 404) {
+          await clearSession();
+          setUser(null);
+        }
       } finally {
         setBooting(false);
       }
@@ -34,6 +62,7 @@ export function AuthProvider({ children }) {
     try {
       await SecureStore.setItemAsync(KEY, token);
     } catch {}
+    saveUser(u);
     setUser(u);
   };
 
@@ -47,13 +76,13 @@ export function AuthProvider({ children }) {
     await finish(data);
   };
 
-  const updateUser = (updated) => setUser(updated);
+  const updateUser = (updated) => {
+    saveUser(updated);
+    setUser(updated);
+  };
 
   const logout = async () => {
-    setToken(null);
-    try {
-      await SecureStore.deleteItemAsync(KEY);
-    } catch {}
+    await clearSession();
     setUser(null);
   };
 

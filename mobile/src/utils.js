@@ -16,7 +16,20 @@ export const colorFor = (text = "") => {
   return PALETTE[h % PALETTE.length];
 };
 
-export const initials = (name = "") =>
+/** Time-of-day greeting, e.g. { text: "Good morning", icon: "sunny" } */
+export const greeting = (date = new Date()) => {
+  const h = date.getHours();
+  if (h < 12) return { text: "Good morning", icon: "sunny-outline" };
+  if (h < 17) return { text: "Good afternoon", icon: "partly-sunny-outline" };
+  return { text: "Good evening", icon: "moon-outline" };
+};
+
+export const firstName = (name = "") => name.trim().split(" ")[0] || "";
+
+export const todayLabel = (date = new Date()) =>
+  date.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
+
+export const initials =(name = "") =>
   name
     .split(" ")
     .filter(Boolean)

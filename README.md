@@ -12,7 +12,7 @@ React Native (Expo + NativeWind/Tailwind) mobile app with an Express + MongoDB A
 - npm
 - MongoDB Atlas account and database
 - Expo account for mobile development and EAS builds
-- Android phone with Expo Go for local device testing, or an Android emulator
+- Android phone with Expo Go for local device testing, or Android Studio (for the PC emulator)
 
 ## 1. Run the backend locally
 
@@ -88,7 +88,69 @@ Start Expo:
 npx expo start
 ```
 
-Then scan the QR code with Expo Go, or press `a` to open an Android emulator. If the app cannot connect to the API, check the URL, Windows Firewall, and that both devices are on the same network.
+Then scan the QR code with Expo Go. If the app cannot connect to the API, check the URL, Windows Firewall, and that both devices are on the same network.
+
+## 2a. Run on an Android emulator on your PC (Windows)
+
+### One-time setup
+
+1. Install **Android Studio** from https://developer.android.com/studio.
+2. Open Android Studio → **More Actions → SDK Manager** and make sure these are installed:
+   - **SDK Platforms:** a recent Android version (e.g. Android 14/15)
+   - **SDK Tools:** Android SDK Platform-Tools, Android Emulator, Android SDK Build-Tools
+3. Open **More Actions → Virtual Device Manager → Create device**, pick a phone (e.g. Pixel 7), choose a system image with **Google Play**, and finish.
+4. Set the environment variables (PowerShell, then reopen the terminal):
+
+   ```powershell
+   [Environment]::SetEnvironmentVariable("ANDROID_HOME", "$env:LOCALAPPDATA\Android\Sdk", "User")
+   $p = [Environment]::GetEnvironmentVariable("Path", "User")
+   [Environment]::SetEnvironmentVariable("Path", "$p;$env:LOCALAPPDATA\Android\Sdk\platform-tools;$env:LOCALAPPDATA\Android\Sdk\emulator", "User")
+   ```
+
+5. Check it works:
+
+   ```powershell
+   adb version
+   emulator -list-avds
+   ```
+
+### Every time you run the app
+
+From the `mobile` folder:
+
+```bash
+# 1. Boot the emulator and wait until adb sees it (first AVD by default)
+npm run emulator
+
+# or choose a specific AVD by name
+npm run emulator -- <AVD name from "emulator -list-avds">
+
+# 2. Start Expo and open the app on the emulator
+npm run android
+```
+
+`npm run emulator` runs [mobile/scripts/start-emulator.ps1](mobile/scripts/start-emulator.ps1). It starts the emulator, fixes the common "device unauthorized" adb problem, and waits until Android has finished booting.
+
+In development the app has no "Student QR" icon of its own. It runs inside **Expo Go**, which `npm run android` installs on the emulator the first time. To get a real app icon, build and install the APK (section 3).
+
+You can also start Expo with `npx expo start` and press `a` in the terminal to open the app on the running emulator. Press `r` to reload and `j` to open the debugger.
+
+When the backend runs on your own PC, set `API_URL` to `http://10.0.2.2:5000` in `mobile/src/config.js`. Inside the emulator, `10.0.2.2` is your computer's `localhost`.
+
+### Emulator troubleshooting
+
+| Problem | Fix |
+|---|---|
+| `adb` / `emulator` not recognized | Set `ANDROID_HOME` and `Path` as above, then reopen the terminal |
+| `No AVD found` | Create a virtual device in Android Studio → Virtual Device Manager |
+| Device shows `unauthorized` / `offline` | `adb kill-server` then `adb start-server`, or run `npm run emulator` again |
+| App can't reach the API | Use `http://10.0.2.2:5000` (not `localhost`) and make sure the backend is running |
+| "System UI isn't responding" / very slow emulator | In Android Studio → Device Manager → Edit device → **Graphics: Hardware**. Or set `hw.gpu.enabled = yes` and `hw.gpu.mode = host` in `%USERPROFILE%\.android\avd\<name>.avd\config.ini`. Close Chrome/Edge tabs to free RAM, since the emulator needs about 3 GB. |
+| Emulator window closes by itself (crash in `nvoglv64.dll` in Windows Event Viewer) | Old NVIDIA OpenGL driver. The script uses `-gpu angle_indirect` to avoid it. Updating the NVIDIA driver lets you use the faster `hw.gpu.mode = host` |
+| `It took too long to start the Android emulator` or `cannot connect to 127.0.0.1:5554` | Run `npm run emulator` first and wait for "Emulator is ready", then run `npm run android` |
+| Login shows **"Network Error"** on the emulator (logcat: `Trust anchor for certification path not found`) | An antivirus is scanning HTTPS (e.g. **Avast → Protection → Core Shields → Web Shield → turn off "Enable HTTPS scanning"**). The emulator does not trust the antivirus certificate. Real phones are not affected |
+| Stale bundle / odd errors | `npx expo start -c` to clear the Metro cache |
+| Dependency version warnings | `npm run fix-deps` (runs `expo install --fix`) |
 
 ## 3. Build an installable Android APK
 
@@ -171,7 +233,71 @@ export const API_URL = "https://your-api.example.com";
 
 Build a new APK after changing the API URL.
 
-### API summary
+## 5. Production command cheat sheet
+
+### Backend
+
+```bash
+cd backend
+npm ci                 # clean install from package-lock.json
+npm start              # run the API (node src/server.js)
+```
+
+Set `NODE_ENV=production` and the variables from section 1 on the host. Don't use `npm run dev` in production because it runs in watch mode.
+
+### Mobile (EAS)
+
+```bash
+cd mobile
+npm ci
+npx expo install --fix                 # align packages with the Expo SDK
+npx expo-doctor                        # check the project for problems before building
+npx eas-cli login
+npx eas-cli whoami
+
+# Installable APKs (both profiles in eas.json produce an .apk)
+npx eas-cli build --platform android --profile preview
+npx eas-cli build --platform android --profile production
+
+# Build status and download links
+npx eas-cli build:list --platform android
+```
+
+To install a finished APK straight onto a running emulator or USB-connected phone:
+
+```bash
+adb install -r path	opp.apk
+```
+
+### Test a release build locally (no EAS)
+
+This needs Android Studio, the JDK it bundles, and `ANDROID_HOME` set:
+
+```bash
+cd mobile
+npx expo run:android --variant release
+```
+
+This generates the native `android/` folder, builds a release app, and installs it on the running emulator or connected device.
+
+### Google Play (optional)
+
+The Play Store needs an `.aab` instead of an `.apk`. To publish there, add a store profile to `eas.json`:
+
+```json
+"store": { "android": { "buildType": "app-bundle" } }
+```
+
+Then run:
+
+```bash
+npx eas-cli build --platform android --profile store
+npx eas-cli submit --platform android --latest
+```
+
+Increase `version` in `mobile/app.json` before each release.
+
+## API summary
 | Method | Path | Who |
 |---|---|---|
 | POST | /api/auth/register, /api/auth/login | public |
@@ -184,7 +310,7 @@ Build a new APK after changing the API URL.
 | GET | /api/students, /api/students/stats, /api/students/:id | admin |
 | PUT/DELETE | /api/students/:id | admin |
 
-### Notes
+## Notes
 - `package.json` uses loose versions on purpose; `npx expo install --fix` aligns packages with the installed Expo SDK.
 - Camera scanning needs a real device (or an emulator with a camera feed).
 - "Download / Share QR" exports the QR card as a PNG through the system share sheet (Save to Files/Gallery, WhatsApp, etc.).
