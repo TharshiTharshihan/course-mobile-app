@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { qrCodeFor } = require("../qr");
 
 const studentSchema = new mongoose.Schema(
   {
@@ -9,6 +10,8 @@ const studentSchema = new mongoose.Schema(
     department: { type: String, trim: true, default: "" },
     batch: { type: String, trim: true, default: "" },
     password: { type: String, required: true },
+    // Bumped by "Reset QR" so a lost/shared card stops working
+    qrVersion: { type: Number, default: 1 },
   },
   { timestamps: true }
 );
@@ -17,6 +20,8 @@ studentSchema.methods.toSafe = function () {
   const o = this.toObject();
   delete o.password;
   delete o.__v;
+  delete o.qrVersion;
+  o.qrCode = qrCodeFor(this);
   return o;
 };
 

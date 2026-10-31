@@ -1,21 +1,13 @@
 import React, { useRef, useState } from "react";
-import { View, Text, Alert, Platform } from "react-native";
+import { View, Text, Alert, Platform, ActivityIndicator } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import QRCode from "react-native-qrcode-svg";
 import { captureRef } from "react-native-view-shot";
 import * as Sharing from "expo-sharing";
 import { Button } from "./ui";
 
-// QR content is plain (unencrypted) JSON.
-export const buildQrPayload = (s) =>
-  JSON.stringify({ type: "student", id: s._id, studentId: s.studentId, name: s.fullName, email: s.email });
-
-export const parseQrPayload = (text) => {
-  try {
-    const o = JSON.parse(text);
-    if (o && o.type === "student" && (o.id || o.studentId)) return o;
-  } catch {}
-  return null;
-};
+// The QR holds a server-signed code (SQR1.<id>.<version>.<signature>) issued by the API as student.qrCode.
+// It contains no personal data and cannot be forged; scanning always checks it against the database.
 
 export default function StudentQR({ student, showActions = true }) {
   const ref = useRef(null);
@@ -60,11 +52,22 @@ export default function StudentQR({ student, showActions = true }) {
           <Text className="text-xs font-extrabold uppercase tracking-widest text-ink">Student ID</Text>
         </View>
         <View className="rounded-2xl bg-white p-3">
-          <QRCode value={buildQrPayload(student)} size={210} color="#0B0B0F" backgroundColor="#FFFFFF" />
+          {student.qrCode ? (
+            <QRCode value={student.qrCode} size={210} color="#0B0B0F" backgroundColor="#FFFFFF" ecl="M" />
+          ) : (
+            <View style={{ width: 210, height: 210 }} className="items-center justify-center rounded-2xl bg-gray-100">
+              <ActivityIndicator color="#0B0B0F" />
+              <Text className="mt-2 text-xs text-gray-500">Loading your QR…</Text>
+            </View>
+          )}
         </View>
         <Text className="mt-4 text-xl font-extrabold text-ink">{student.fullName}</Text>
         <Text className="mt-0.5 text-base font-semibold text-gray-500">{student.studentId}</Text>
         {student.department ? <Text className="mt-0.5 text-sm text-gray-400">{student.department}</Text> : null}
+        <View className="mt-3 flex-row items-center">
+          <Ionicons name="shield-checkmark" size={13} color="#10B981" />
+          <Text className="ml-1 text-[11px] font-semibold text-gray-400">Secured QR · valid only for this student</Text>
+        </View>
       </View>
       {showActions ? (
         <Button
@@ -74,6 +77,7 @@ export default function StudentQR({ student, showActions = true }) {
           title="Download / Share QR"
           onPress={download}
           loading={busy}
+          disabled={!student.qrCode}
         />
       ) : null}
     </View>

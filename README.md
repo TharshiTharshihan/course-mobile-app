@@ -1,10 +1,23 @@
 # Student QR App
 
-React Native (Expo + NativeWind/Tailwind) mobile app with an Express + MongoDB Atlas backend.
+Attendance and class-management app for a tuition class owner (teacher) and their students. React Native (Expo + NativeWind) mobile app with an Express + MongoDB Atlas backend.
 
-- **Students**: sign up, log in, browse courses, open PDFs/notes the admin uploaded, see and share their own QR code.
-- **Admin** (same app, hardcoded login): dashboard, view/search/edit/delete students, download/share any student's QR, scan QR codes to see details, add/edit/delete courses (name, code), upload/rename/delete PDFs.
-- QR content is plain JSON (not encrypted): `{"type":"student","id":"<mongoId>","studentId":"...","name":"...","email":"..."}`.
+- **Teacher (admin)**
+  - **QR attendance:** choose a class, then scan students one after another. Each student is marked once per day per class.
+  - **Attendance register:** pick a day and class to see who's present and absent, and remove a mistaken check-in.
+  - **Notices:** send announcements, class-time reminders and "bring this to class" notes, to everyone or to one class, with pinning.
+  - **Classes and notes:** create classes, then upload, rename and delete PDFs and other notes.
+  - **Students:** search, view, edit and delete students, view each student's attendance, and reset a lost or shared QR.
+  - **Account:** change name, email and password. The setup password from `.env` must be changed after the first login.
+- **Students:** sign up, open class notes, read notices (unread ones are tagged "New"), show their QR at class, and see their attendance and profile. They can also change their password.
+
+## Security model
+
+- **Signed QR codes.** A student QR contains `SQR1.<id>.<version>.<signature>`. The signature is an HMAC made by the server with `QR_SECRET` (or `JWT_SECRET` if that's empty). It holds no personal data and can't be forged or edited. A scan is accepted only when the signature is valid **and** the student still exists in the database. **Reset QR** increases the version, so an old card stops working.
+- **Admin account.** The first login with `ADMIN_EMAIL` / `ADMIN_PASSWORD` creates the admin in the database, with a hashed password, and asks for a new password. After that, the `.env` password no longer works.
+  - *Forgot the admin password?* In MongoDB Atlas, delete the single document in the `admins` collection. The `.env` login then works once more, and creates a fresh admin.
+- **Login rate limit.** After 10 failed logins for one email from one IP, that combination is blocked for 15 minutes.
+- **Known limit:** uploaded files under `/uploads/...` can be opened by anyone who has the exact link.
 
 ## Requirements
 
@@ -30,9 +43,14 @@ Edit `backend/.env` before starting the server:
 PORT=5000
 MONGO_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/studentqr?retryWrites=true&w=majority
 JWT_SECRET=replace-with-a-long-random-secret
+# Optional: signs student QR codes (falls back to JWT_SECRET). Changing it invalidates every QR.
+QR_SECRET=
+# First admin login only; you'll be asked to change the password in the app.
 ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=replace-with-a-strong-password
 ```
+
+Generate a strong secret with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.
 
 Create a free cluster at https://www.mongodb.com/atlas, add a database user, and under **Network Access** allow your development IP. Avoid using `0.0.0.0/0` except for temporary testing.
 
@@ -217,7 +235,7 @@ Use these settings:
 - **Root directory:** `backend`
 - **Install command:** `npm install`
 - **Start command:** `npm start`
-- **Environment variables:** `PORT`, `MONGO_URI`, `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`
+- **Environment variables:** `PORT`, `MONGO_URI`, `JWT_SECRET`, `QR_SECRET` (optional), `ADMIN_EMAIL`, `ADMIN_PASSWORD`
 
 After deployment, confirm the health endpoint:
 
@@ -301,22 +319,32 @@ Increase `version` in `mobile/app.json` before each release.
 | Method | Path | Who |
 |---|---|---|
 | POST | /api/auth/register, /api/auth/login | public |
-| GET | /api/auth/me | logged in |
-| PUT | /api/auth/me | logged-in student |
+| GET / PUT | /api/auth/me (student: name, phone · admin: name, email) | logged in |
+| PUT | /api/auth/password (`currentPassword`, `newPassword`, `confirmPassword`) | logged in |
 | GET | /api/courses, /api/courses/:id, /api/courses/:id/materials | logged in |
 | POST/PUT/DELETE | /api/courses, /api/courses/:id | admin |
 | POST | /api/courses/:id/materials (multipart `file`, `title`) | admin |
 | PUT/DELETE | /api/materials/:id | admin |
 | GET | /api/students, /api/students/stats, /api/students/:id | admin |
 | PUT/DELETE | /api/students/:id | admin |
+| POST | /api/students/:id/reset-qr | admin |
+| POST | /api/attendance/scan (`code`, `course` or null, `mark`) | admin |
+| GET | /api/attendance?date=YYYY-MM-DD&course=all\|general\|<id> | admin |
+| DELETE | /api/attendance/:id | admin |
+| GET | /api/attendance/me | student |
+| GET | /api/announcements | logged in |
+| POST/PUT/DELETE | /api/announcements, /api/announcements/:id | admin |
+
+Attendance days use Sri Lanka time (`Asia/Colombo`); set `TZ_NAME` to change it.
 
 ## Notes
 - `package.json` uses loose versions on purpose; `npx expo install --fix` aligns packages with the installed Expo SDK.
 - Camera scanning needs a real device (or an emulator with a camera feed).
+- **Upgrading from the old version:** QR codes printed before the signed-QR change (plain JSON) are rejected. Students just open **My QR** again to get the new code. The first admin login after deploying creates the admin from `.env`.
 - "Download / Share QR" exports the QR card as a PNG through the system share sheet (Save to Files/Gallery, WhatsApp, etc.).
 
 ## Project layout
 ```
-backend/  Express API (models, routes, auth middleware)
+backend/  Express API (models, routes, auth + rate-limit middleware, qr.js signing)
 mobile/   Expo app (src/screens, src/components, src/navigation.js)
 ```

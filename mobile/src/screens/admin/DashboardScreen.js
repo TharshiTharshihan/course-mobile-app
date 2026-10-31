@@ -5,50 +5,39 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import api from "../../api";
 import { useAuth } from "../../context/AuthContext";
-import { Avatar, Card, ConfirmModal, Empty, GreetingHero, Loader, Sheet } from "../../components/ui";
-import { errMsg } from "../../utils";
-
-function Stat({ icon, label, value, loading }) {
-  return (
-    <View className="flex-1 rounded-3xl bg-white p-4 shadow-sm">
-      <View className="mb-3 h-10 w-10 items-center justify-center rounded-full bg-brand">
-        <Ionicons name={icon} size={20} color="#0B0B0F" />
-      </View>
-      {loading ? (
-        <View className="my-2 h-6 w-10 rounded-lg bg-gray-100" />
-      ) : (
-        <Text className="text-3xl font-extrabold text-ink">{value}</Text>
-      )}
-      <Text className="text-xs font-semibold uppercase tracking-wide text-gray-400">{label}</Text>
-    </View>
-  );
-}
+import { Avatar, Banner, Card, Empty, GreetingHero, HeaderButton, Loader, SectionTitle, Sheet, StatCard } from "../../components/ui";
+import { NOTICE_TYPES, errMsg, timeAgo, alertError } from "../../utils";
 
 function Action({ icon, label, onPress }) {
   return (
-    <Pressable onPress={onPress} className="flex-1 items-center rounded-3xl bg-ink px-2 py-4 active:opacity-80">
-      <Ionicons name={icon} size={26} color="#FFC400" />
-      <Text className="mt-2 text-sm font-bold text-white">{label}</Text>
+    <Pressable onPress={onPress} className="flex-1 items-center rounded-3xl bg-ink px-1 py-4 active:opacity-80">
+      <View className="h-11 w-11 items-center justify-center rounded-2xl bg-brand">
+        <Ionicons name={icon} size={22} color="#0B0B0F" />
+      </View>
+      <Text className="mt-2 text-xs font-bold text-white" numberOfLines={1}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
 
 export default function DashboardScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const { user, logout } = useAuth();
-  const [stats, setStats] = useState({ students: 0, courses: 0, materials: 0 });
+  const { user } = useAuth();
+  const [stats, setStats] = useState({ students: 0, courses: 0, materials: 0, presentToday: 0 });
   const [recent, setRecent] = useState([]);
+  const [notices, setNotices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      const [s, l] = await Promise.all([api.get("/students/stats"), api.get("/students")]);
+      const [s, l, n] = await Promise.all([api.get("/students/stats"), api.get("/students"), api.get("/announcements")]);
       setStats(s.data);
-      setRecent(l.data.slice(0, 5));
+      setRecent(l.data.slice(0, 4));
+      setNotices(n.data.slice(0, 2));
     } catch (e) {
-      Alert.alert("Error", errMsg(e));
+      alertError(e);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -61,19 +50,14 @@ export default function DashboardScreen({ navigation }) {
     }, [load])
   );
 
+  const pct = stats.students ? Math.round((stats.presentToday / stats.students) * 100) : 0;
+
   return (
-    <View className="flex-1 bg-surface ">
+    <View className="flex-1 bg-surface">
       <GreetingHero
         name={user?.fullName}
-        subtitle="Here's what's happening in your admin panel"
-        right={
-          <Pressable
-            onPress={() => setShowLogoutModal(true)}
-            className="h-10 w-10 items-center justify-center rounded-full bg-white/10"
-          >
-            <Ionicons name="log-out-outline" size={20} color="#fff" />
-          </Pressable>
-        }
+        subtitle="Here's your class today"
+        right={<HeaderButton icon="person-circle-outline" badge={user?.mustChangePassword} onPress={() => navigation.navigate("AdminProfile")} />}
       />
       <Sheet>
         <ScrollView
@@ -90,32 +74,90 @@ export default function DashboardScreen({ navigation }) {
             />
           }
         >
-          <View className="flex-row gap-3">
-            <Stat icon="people" label="Students" value={stats.students} loading={loading} />
-            <Stat icon="book" label="Courses" value={stats.courses} loading={loading} />
-            <Stat icon="document-text" label="Files" value={stats.materials} loading={loading} />
+          {user?.mustChangePassword ? (
+            <Banner
+              icon="shield-half"
+              title="Secure your account"
+              text="You're signed in with the setup password. Set your own password now."
+              action="Change password"
+              onAction={() => navigation.navigate("AdminProfile", { changePassword: true })}
+            />
+          ) : null}
+
+          {/* Today's attendance */}
+          <Pressable onPress={() => navigation.navigate("Attendance")} className="rounded-3xl bg-ink p-5 active:opacity-90">
+            <View className="flex-row items-center justify-between">
+              <Text className="text-xs font-bold uppercase tracking-widest text-white/50">Present today</Text>
+              <Ionicons name="arrow-forward" size={18} color="#FFC400" />
+            </View>
+            <View className="mt-2 flex-row items-end">
+              <Text className="text-5xl text-white" style={{ fontFamily: "Poppins_700Bold" }}>
+                {loading ? "–" : stats.presentToday}
+              </Text>
+              <Text className="mb-2 ml-2 text-base font-semibold text-white/50">of {stats.students} students</Text>
+            </View>
+            <View className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
+              <View className="h-full rounded-full bg-brand" style={{ width: `${pct}%` }} />
+            </View>
+          </Pressable>
+
+          <View className="mt-3 flex-row gap-3">
+            <StatCard icon="people" label="Students" value={stats.students} loading={loading} onPress={() => navigation.navigate("Students")} />
+            <StatCard icon="book" label="Classes" value={stats.courses} loading={loading} tint="#BFE3FF" onPress={() => navigation.navigate("Courses")} />
+            <StatCard icon="document-text" label="Files" value={stats.materials} loading={loading} tint="#C9F2D0" />
           </View>
 
-          <Text className="mb-3 mt-8 text-sm font-extrabold uppercase tracking-widest text-gray-400">Quick actions</Text>
-          <View className="flex-row gap-3">
-            <Action icon="scan" label="Scan QR" onPress={() => navigation.navigate("Scan")} />
+          <SectionTitle title="Quick actions" />
+          <View className="flex-row gap-2.5">
+            <Action icon="scan" label="Scan" onPress={() => navigation.navigate("Scan")} />
+            <Action icon="megaphone" label="Notice" onPress={() => navigation.navigate("Notices")} />
             <Action icon="people" label="Students" onPress={() => navigation.navigate("Students")} />
-            <Action icon="book" label="Courses" onPress={() => navigation.navigate("Courses")} />
+            <Action icon="cloud-upload" label="Notes" onPress={() => navigation.navigate("Courses")} />
           </View>
 
-          <Text className="mb-3 mt-8 text-sm font-extrabold uppercase tracking-widest text-gray-400">Recent sign-ups</Text>
+          <SectionTitle title="Latest notices" action="See all" onAction={() => navigation.navigate("Notices")} />
           {loading ? (
             <Loader />
-          ) : recent.length === 0 ? (
+          ) : notices.length === 0 ? (
+            <Card>
+              <Text className="text-sm text-gray-500">No notices yet. Send a reminder or announcement from the Notices tab.</Text>
+            </Card>
+          ) : (
+            notices.map((n) => {
+              const t = NOTICE_TYPES[n.type] || NOTICE_TYPES.announcement;
+              return (
+                <Card key={n._id} className="mb-3" onPress={() => navigation.navigate("Notices")}>
+                  <View className="flex-row items-center">
+                    <View className="mr-3 h-10 w-10 items-center justify-center rounded-2xl" style={{ backgroundColor: t.bg }}>
+                      <Ionicons name={t.icon} size={18} color={t.color} />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-base font-bold text-ink" numberOfLines={1}>
+                        {n.title}
+                      </Text>
+                      <Text className="text-xs text-gray-500">
+                        {t.label} · {n.course ? n.course.code : "Everyone"} · {timeAgo(n.createdAt)}
+                      </Text>
+                    </View>
+                  </View>
+                </Card>
+              );
+            })
+          )}
+
+          <SectionTitle title="Recent sign-ups" action="All students" onAction={() => navigation.navigate("Students")} />
+          {loading ? null : recent.length === 0 ? (
             <Empty icon="people-outline" title="No students yet" text="New registrations will show up here." />
           ) : (
             recent.map((s) => (
               <Card key={s._id} className="mb-3" onPress={() => navigation.navigate("StudentDetail", { id: s._id })}>
                 <View className="flex-row items-center">
-                  <Avatar name={s.fullName} />
+                  <Avatar name={s.fullName} size={44} />
                   <View className="ml-3 flex-1">
                     <Text className="text-base font-bold text-ink">{s.fullName}</Text>
-                    <Text className="text-sm text-gray-500">{s.studentId}</Text>
+                    <Text className="text-sm text-gray-500">
+                      {s.studentId} · {timeAgo(s.createdAt)}
+                    </Text>
                   </View>
                   <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
                 </View>
@@ -124,17 +166,6 @@ export default function DashboardScreen({ navigation }) {
           )}
         </ScrollView>
       </Sheet>
-      <ConfirmModal
-        visible={showLogoutModal}
-        title="Sign out?"
-        message="Are you sure you want to sign out of the admin panel?"
-        confirmLabel="Sign out"
-        onCancel={() => setShowLogoutModal(false)}
-        onConfirm={async () => {
-          setShowLogoutModal(false);
-          await logout();
-        }}
-      />
     </View>
   );
 }

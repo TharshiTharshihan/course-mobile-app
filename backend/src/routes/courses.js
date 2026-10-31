@@ -4,6 +4,8 @@ const path = require("path");
 const multer = require("multer");
 const Course = require("../models/Course");
 const Material = require("../models/Material");
+const Attendance = require("../models/Attendance");
+const Announcement = require("../models/Announcement");
 const { auth, adminOnly } = require("../middleware/auth");
 
 const uploadDir = path.join(__dirname, "..", "..", "uploads");
@@ -73,7 +75,11 @@ router.delete("/courses/:id", adminOnly, async (req, res) => {
   if (!course) return res.status(404).json({ message: "Course not found" });
   const mats = await Material.find({ course: course._id });
   mats.forEach((m) => removeFile(m.fileName));
-  await Material.deleteMany({ course: course._id });
+  await Promise.all([
+    Material.deleteMany({ course: course._id }),
+    Attendance.deleteMany({ course: course._id }),
+    Announcement.deleteMany({ course: course._id }),
+  ]);
   res.json({ ok: true });
 });
 

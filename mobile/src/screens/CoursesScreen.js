@@ -4,12 +4,12 @@ import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
-import { Card, ConfirmModal, Empty, FormModal, GreetingHero, Hero, Input, Loader, Sheet } from "../components/ui";
-import { colorFor, errMsg } from "../utils";
+import { Card, ConfirmModal, Empty, Fab, FormModal, GreetingHero, HeaderButton, Hero, Input, Loader, Sheet } from "../components/ui";
+import { colorFor, errMsg, alertError } from "../utils";
 
 const FIELDS = [
-  { key: "name", label: "Course name", placeholder: "Data Structures & Algorithms" },
-  { key: "code", label: "Course code", placeholder: "CE2012", autoCapitalize: "characters" },
+  { key: "name", label: "Class name", placeholder: "2027 A/L Physics - Theory" },
+  { key: "code", label: "Short code", placeholder: "PHY27", autoCapitalize: "characters" },
   { key: "description", label: "Description (optional)", placeholder: "Short summary", multiline: true },
 ];
 
@@ -27,7 +27,7 @@ export default function CoursesScreen({ navigation }) {
       const { data } = await api.get("/courses");
       setCourses(data);
     } catch (e) {
-      Alert.alert("Error", errMsg(e));
+      alertError(e);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -52,7 +52,7 @@ export default function CoursesScreen({ navigation }) {
   };
 
   const remove = (c) =>
-    Alert.alert("Delete course?", `"${c.name}" and all its files will be removed.`, [
+    Alert.alert("Delete class?", `"${c.name}" with its files, notices and attendance records will be removed.`, [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete",
@@ -62,7 +62,7 @@ export default function CoursesScreen({ navigation }) {
             await api.delete(`/courses/${c._id}`);
             load();
           } catch (e) {
-            Alert.alert("Error", errMsg(e));
+            alertError(e);
           }
         },
       },
@@ -72,21 +72,18 @@ export default function CoursesScreen({ navigation }) {
     (c) => c.name.toLowerCase().includes(q.toLowerCase()) || c.code.toLowerCase().includes(q.toLowerCase())
   );
 
-  const logoutButton = (
-    <Pressable
-      onPress={() => setShowLogoutModal(true)}
-      className="h-10 w-10 items-center justify-center rounded-full bg-white/10 active:opacity-70"
-    >
-      <Ionicons name="log-out-outline" size={20} color="#fff" />
-    </Pressable>
+  const headerButton = isAdmin ? (
+    <HeaderButton icon="person-circle-outline" badge={user?.mustChangePassword} onPress={() => navigation.navigate("AdminProfile")} />
+  ) : (
+    <HeaderButton icon="log-out-outline" onPress={() => setShowLogoutModal(true)} />
   );
 
   return (
     <View className="flex-1 bg-surface">
       {isAdmin ? (
-        <Hero title="Manage courses" titleStyle={{ fontFamily: "Poppins_700Bold" }} subtitle="Add, edit and upload notes" right={logoutButton} />
+        <Hero title="Classes" titleStyle={{ fontFamily: "Poppins_700Bold" }} subtitle="Create classes and share notes & PDFs" right={headerButton} />
       ) : (
-        <GreetingHero name={user?.fullName} subtitle="Pick a course to open your notes" right={logoutButton} />
+        <GreetingHero name={user?.fullName} subtitle="Pick a class to open its notes" right={headerButton} />
       )}
       <Sheet>
         <FlatList
@@ -99,13 +96,13 @@ export default function CoursesScreen({ navigation }) {
             load();
           }}
           ListHeaderComponent={
-            <Input icon="search-outline" placeholder="Search by name or code" value={q} onChangeText={setQ} />
+            <Input icon="search-outline" placeholder="Search classes" value={q} onChangeText={setQ} />
           }
           ListEmptyComponent={
             loading ? (
               <Loader />
             ) : (
-              <Empty icon="book-outline" title="No courses yet" text={isAdmin ? "Tap + to add the first course." : "Your admin has not added courses yet."} />
+              <Empty icon="book-outline" title="No classes yet" text={isAdmin ? "Tap + to add your first class." : "Your teacher has not added classes yet."} />
             )
           }
           renderItem={({ item }) => (
@@ -156,18 +153,11 @@ export default function CoursesScreen({ navigation }) {
         }}
       />
 
-      {isAdmin ? (
-        <Pressable
-          onPress={() => setModal({})}
-          className="absolute bottom-6 right-6 h-16 w-16 items-center justify-center rounded-full bg-brand shadow-lg active:opacity-80"
-        >
-          <Ionicons name="add" size={32} color="#0B0B0F" />
-        </Pressable>
-      ) : null}
+      {isAdmin ? <Fab onPress={() => setModal({})} /> : null}
 
       <FormModal
         visible={!!modal}
-        title={modal?._id ? "Edit course" : "New course"}
+        title={modal?._id ? "Edit class" : "New class"}
         fields={FIELDS}
         initial={modal || {}}
         onClose={() => setModal(null)}

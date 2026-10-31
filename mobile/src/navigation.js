@@ -16,6 +16,9 @@ import DashboardScreen from "./screens/admin/DashboardScreen";
 import StudentsScreen from "./screens/admin/StudentsScreen";
 import StudentDetailScreen from "./screens/admin/StudentDetailScreen";
 import ScanScreen from "./screens/admin/ScanScreen";
+import AttendanceScreen from "./screens/admin/AttendanceScreen";
+import AdminProfileScreen from "./screens/admin/AdminProfileScreen";
+import NoticesScreen from "./screens/NoticesScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -24,8 +27,10 @@ const ICONS = {
   Courses: ["book", "book-outline"],
   MyQR: ["qr-code", "qr-code-outline"],
   Dashboard: ["grid", "grid-outline"],
-  Students: ["people", "people-outline"],
   Scan: ["scan", "scan-outline"],
+  Attendance: ["checkmark-done-circle", "checkmark-done-circle-outline"],
+  Notices: ["megaphone", "megaphone-outline"],
+  Updates: ["notifications", "notifications-outline"],
 };
 
 // Bottom inset = height of Android's gesture/3-button bar (the app draws edge-to-edge),
@@ -34,7 +39,7 @@ const tabOptions = (bottomInset) => ({ route }) => ({
   headerShown: false,
   tabBarActiveTintColor: "#0B0B0F",
   tabBarInactiveTintColor: "#9CA3AF",
-  tabBarLabelStyle: { fontWeight: "700", fontSize: 11, marginBottom: 2 },
+  tabBarLabelStyle: { fontWeight: "700", fontSize: 10.5, marginBottom: 2 },
   tabBarItemStyle: { flex: 1 },
   tabBarIconStyle: { height: 32, width: 56 },
   tabBarStyle: {
@@ -48,8 +53,8 @@ const tabOptions = (bottomInset) => ({ route }) => ({
   tabBarIcon: ({ focused, color }) => (
     <View
       style={{
-        width: 52,
-        height: 32,
+        width: 48,
+        height: 30,
         alignItems: "center",
         justifyContent: "center",
         backgroundColor: focused ? "#FFC400" : "transparent",
@@ -65,7 +70,8 @@ function StudentTabs() {
   const { bottom } = useSafeAreaInsets();
   return (
     <Tab.Navigator screenOptions={tabOptions(bottom)}>
-      <Tab.Screen name="Courses" component={CoursesScreen} />
+      <Tab.Screen name="Courses" component={CoursesScreen} options={{ title: "Classes" }} />
+      <Tab.Screen name="Updates" component={NoticesScreen} />
       <Tab.Screen name="MyQR" component={ProfileScreen} options={{ title: "My QR" }} />
     </Tab.Navigator>
   );
@@ -75,10 +81,11 @@ function AdminTabs() {
   const { bottom } = useSafeAreaInsets();
   return (
     <Tab.Navigator screenOptions={tabOptions(bottom)}>
-      <Tab.Screen name="Dashboard" component={DashboardScreen} />
-      <Tab.Screen name="Students" component={StudentsScreen} />
-      <Tab.Screen name="Courses" component={CoursesScreen} />
+      <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ title: "Home" }} />
+      <Tab.Screen name="Courses" component={CoursesScreen} options={{ title: "Classes" }} />
       <Tab.Screen name="Scan" component={ScanScreen} />
+      <Tab.Screen name="Attendance" component={AttendanceScreen} />
+      <Tab.Screen name="Notices" component={NoticesScreen} />
     </Tab.Navigator>
   );
 }
@@ -107,7 +114,13 @@ function AppStack({ user, isAdmin }) {
         <>
           <Stack.Screen name="Main" component={isAdmin ? AdminTabs : StudentTabs} />
           <Stack.Screen name="Course" component={CourseScreen} />
-          {isAdmin ? <Stack.Screen name="StudentDetail" component={StudentDetailScreen} /> : null}
+          {isAdmin ? (
+            <>
+              <Stack.Screen name="Students" component={StudentsScreen} />
+              <Stack.Screen name="StudentDetail" component={StudentDetailScreen} />
+              <Stack.Screen name="AdminProfile" component={AdminProfileScreen} />
+            </>
+          ) : null}
         </>
       )}
     </Stack.Navigator>

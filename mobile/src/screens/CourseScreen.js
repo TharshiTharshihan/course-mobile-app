@@ -6,7 +6,7 @@ import * as DocumentPicker from "expo-document-picker";
 import api, { fileUrl, getAuthToken } from "../api";
 import { useAuth } from "../context/AuthContext";
 import { Button, Card, Empty, FormModal, Hero, Loader, Sheet } from "../components/ui";
-import { errMsg, formatDate, formatSize } from "../utils";
+import { errMsg, formatDate, formatSize, alertError } from "../utils";
 
 const DOC_TYPES = [
   "application/pdf",
@@ -30,7 +30,7 @@ export default function CourseScreen({ route, navigation }) {
       const { data } = await api.get(`/courses/${course._id}/materials`);
       setItems(data);
     } catch (e) {
-      Alert.alert("Error", errMsg(e));
+      alertError(e);
     } finally {
       setLoading(false);
     }
@@ -90,7 +90,7 @@ export default function CourseScreen({ route, navigation }) {
       setRenaming(null);
       load();
     } catch (e) {
-      Alert.alert("Error", errMsg(e));
+      alertError(e);
     }
   };
 
@@ -105,7 +105,7 @@ export default function CourseScreen({ route, navigation }) {
             await api.delete(`/materials/${m._id}`);
             load();
           } catch (e) {
-            Alert.alert("Error", errMsg(e));
+            alertError(e);
           }
         },
       },

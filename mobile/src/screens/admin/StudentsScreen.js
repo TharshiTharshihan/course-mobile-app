@@ -4,7 +4,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import api from "../../api";
 import { Avatar, Card, Empty, Hero, Input, Loader, Sheet } from "../../components/ui";
-import { errMsg } from "../../utils";
+import { errMsg, alertError } from "../../utils";
 
 export default function StudentsScreen({ navigation }) {
   const [list, setList] = useState([]);
@@ -18,7 +18,7 @@ export default function StudentsScreen({ navigation }) {
       const { data } = await api.get("/students", { params: { q: query } });
       setList(data);
     } catch (e) {
-      Alert.alert("Error", errMsg(e));
+      alertError(e);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -40,7 +40,12 @@ export default function StudentsScreen({ navigation }) {
 
   return (
     <View className="flex-1 bg-surface">
-      <Hero title="Students" subtitle={`${list.length} registered`} titleStyle={{ fontFamily: "Poppins_700Bold" }} />
+      <Hero
+        title="Students"
+        subtitle={`${list.length} registered`}
+        titleStyle={{ fontFamily: "Poppins_700Bold" }}
+        onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
+      />
       <Sheet>
         <FlatList
           data={list}
@@ -66,10 +71,11 @@ export default function StudentsScreen({ navigation }) {
                   </Text>
                   <Text className="text-sm text-gray-500" numberOfLines={1}>
                     {item.studentId}
-                    {item.department ? ` · ${item.department}` : ""}
+                    {item.batch ? ` · ${item.batch}` : ""}
+                    {item.phone ? ` · ${item.phone}` : ""}
                   </Text>
                 </View>
-                <Ionicons name="qr-code-outline" size={22} color="#0B0B0F" />
+                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
               </View>
             </Card>
           )}

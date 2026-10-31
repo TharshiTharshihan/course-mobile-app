@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import * as SecureStore from "expo-secure-store";
-import api, { setToken } from "../api";
+import api, { setToken, setUnauthorizedHandler } from "../api";
 
 const AuthContext = createContext(null);
 const KEY = "student_qr_token";
@@ -23,6 +23,14 @@ const saveUser = async (u) => {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [booting, setBooting] = useState(true);
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      clearSession();
+      setUser(null);
+    });
+    return () => setUnauthorizedHandler(null);
+  }, []);
 
   useEffect(() => {
     (async () => {
